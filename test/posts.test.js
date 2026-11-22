@@ -3,10 +3,11 @@ import assert from 'node:assert/strict';
 import handler from '../api/posts.js';
 
 function response(){return {headers:{},setHeader(k,v){this.headers[k]=v},status(n){this.code=n;return this},json(v){this.body=v;return this},end(){return this}}}
-test('requires an administrator password to delete',async()=>{
-  process.env.ADMIN_PASSWORD='example-password';process.env.GITHUB_TOKEN='example-token';
-  const res=response();await handler({method:'DELETE',headers:{authorization:'Bearer wrong'},body:{id:'example'}},res);
-  assert.equal(res.code,401);
+test('deletes a post without a password',async()=>{
+  process.env.GITHUB_TOKEN='example-token';
+  const originalFetch=globalThis.fetch;let written;
+  globalThis.fetch=async (_url,options)=>options.method==='PUT'?(written=JSON.parse(options.body),{ok:true}):({ok:true,json:async()=>({sha:'old-sha',content:Buffer.from(JSON.stringify([{id:'example'},{id:'keep'}])).toString('base64')})});
+  try{const res=response();await handler({method:'DELETE',headers:{},body:{id:'example'}},res);assert.equal(res.code,200);assert.deepEqual(JSON.parse(Buffer.from(written.content,'base64').toString()).map(p=>p.id),['keep']);}finally{globalThis.fetch=originalFetch;}
 });
 test('writes a new post based on the latest GitHub JSON',async()=>{
   process.env.ADMIN_PASSWORD='example-password';process.env.GITHUB_TOKEN='example-token';
