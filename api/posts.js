@@ -11,6 +11,7 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Methods', 'POST, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   res.setHeader('Cache-Control', 'no-store');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
   if (req.method === 'OPTIONS') return res.status(204).end();
   if (!['POST', 'DELETE'].includes(req.method)) return res.status(405).json({error:'Método não permitido.'});
   const password = process.env.ADMIN_PASSWORD, token = process.env.GITHUB_TOKEN;
